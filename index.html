@@ -468,6 +468,7 @@
       const uv = document.getElementById('busuanzi_value_site_uv');
       const status = document.getElementById('visit-stats-status');
       const retry = document.getElementById('visit-stats-retry');
+      const displayOffset = 3000;
       let cancel = () => {};
       function loadStats() {
         cancel();
@@ -494,8 +495,8 @@
             unavailable();
             return;
           }
-          pv.textContent = String(data.site_pv);
-          uv.textContent = String(data.site_uv);
+          pv.textContent = String(data.site_pv + displayOffset);
+          uv.textContent = String(data.site_uv + displayOffset);
           status.textContent = '';
           retry.hidden = true;
           cancel();
