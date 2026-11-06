@@ -454,12 +454,64 @@
     © 江南大学 通信原理课程 | 资料仅供学习使用
     <br><br>
     <!-- 访问统计 -->
-    <p>本站总访问量：<span id="busuanzi_value_site_pv"></span> 次</p>
-    <p>本站总访客数：<span id="busuanzi_value_site_uv"></span> 人</p>
+    <p>本站总访问量：<span id="busuanzi_value_site_pv">加载中…</span> 次</p>
+    <p>本站总访客数：<span id="busuanzi_value_site_uv">加载中…</span> 人</p>
+    <p id="visit-stats-status" role="status"></p>
+    <button id="visit-stats-retry" type="button" hidden>重新加载统计</button>
+    <noscript>请启用 JavaScript 查看访问统计。</noscript>
   </footer>
 
-  <!-- 不蒜子统计脚本 -->
-  <script src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <!-- 直接请求原不蒜子统计接口，保留历史计数，避免串行加载外部脚本。 -->
+  <script>
+    (() => {
+      const pv = document.getElementById('busuanzi_value_site_pv');
+      const uv = document.getElementById('busuanzi_value_site_uv');
+      const status = document.getElementById('visit-stats-status');
+      const retry = document.getElementById('visit-stats-retry');
+      let cancel = () => {};
+      function loadStats() {
+        cancel();
+        pv.textContent = uv.textContent = '加载中…';
+        status.textContent = '';
+        retry.hidden = true;
+        const callback = 'BusuanziCallback_' + Date.now() + '_' + Math.floor(Math.random() * 1000000);
+        const script = document.createElement('script');
+        let timer;
+        cancel = () => {
+          clearTimeout(timer);
+          script.onerror = null;
+          script.remove();
+          delete window[callback];
+        };
+        const unavailable = () => {
+          pv.textContent = uv.textContent = '暂不可用';
+          status.textContent = '统计服务暂时未响应，请稍后重试。';
+          retry.hidden = false;
+        };
+        window[callback] = data => {
+          if (!data || !Number.isSafeInteger(data.site_pv) || !Number.isSafeInteger(data.site_uv) || data.site_pv < 0 || data.site_uv < 0) {
+            cancel();
+            unavailable();
+            return;
+          }
+          pv.textContent = String(data.site_pv);
+          uv.textContent = String(data.site_uv);
+          status.textContent = '';
+          retry.hidden = true;
+          cancel();
+        };
+        script.async = true;
+        script.referrerPolicy = 'no-referrer-when-downgrade';
+        script.src = 'https://busuanzi.ibruce.info/busuanzi?jsonpCallback=' + callback;
+        script.onerror = () => { cancel(); unavailable(); };
+        // 超时后仍接受原请求的迟到结果，不自动重复请求，避免额外计数。
+        timer = setTimeout(unavailable, 12000);
+        document.head.appendChild(script);
+      }
+      retry.addEventListener('click', loadStats);
+      loadStats();
+    })();
+  </script>
 </body>
 </html>
 
